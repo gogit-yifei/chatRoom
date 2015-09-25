@@ -1,9 +1,20 @@
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+import javax.swing.JFrame;
+import javax.swing.JButton;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JScrollPane;
+import javax.swing.JPanel;
+
+import java.net.Socket;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Scanner;
+
+
 
 /**
  * Chat Room
