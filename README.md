@@ -1,2 +1,2 @@
 # chatRoom
-a chat room using java
+A multi-user chat room application built with Java
