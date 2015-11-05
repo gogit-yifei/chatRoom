@@ -3,10 +3,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import java.util.Enumeration;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,29 +19,39 @@ import java.lang.InterruptedException;
  */
 
 public class ChatRoomServer {
+	
 	/**
 	 * Attributes
 	 */
-	final int MSG_Q_SIZE = 100;
-	static int port = 13042;
+	private final int MSG_Q_SIZE = 10000;
+	private static int portNumber = 13042;
 	private ServerSocket serverSocket;
-	private ConcurrentHashMap<Socket, PrintWriter> connections = new ConcurrentHashMap<Socket, PrintWriter>();
-	private BlockingQueue<String> msgQ = new ArrayBlockingQueue<String>(MSG_Q_SIZE);
+	private ConcurrentHashMap<Socket, PrintWriter> connections = 
+			new ConcurrentHashMap<Socket, PrintWriter>();
+	private BlockingQueue<String> msgQ = 
+			new ArrayBlockingQueue<String>(MSG_Q_SIZE);
+	
 	/**
 	 * constructor
-	 * the main thread is used to handle new connections, and MessageHandler
-	 * thread is used to handle the message queue.
+	 * the main thread is used to handle new connections, 
+	 * and MessageHandler thread is used to handle the message queue.
+	 * 
+	 * @param port  the port number this server will be listening
 	 */
-	public ChatRoomServer(int port) throws IOException, SocketException, InterruptedException {
-		serverSocket = new ServerSocket(port);
+	public ChatRoomServer(int portNumber) throws IOException, 
+				SocketException, InterruptedException {
+		
+		serverSocket = new ServerSocket(portNumber);
 		String ipAddress = "0.0.0.0";
+		
 		try {
 			InetAddress address = InetAddress.getLocalHost();
 			ipAddress = address.getHostAddress();
 		} catch(UnknownHostException e) {
 			e.printStackTrace();
 		}
-		System.out.format("Chat Room Server (%s) is ready and listening at port %d\n", ipAddress, port);
+		
+		System.out.format("Chat Room Server (%s) is ready and listening at port %d\n", ipAddress, portNumber);
 		MessageHandler messageHandler = new MessageHandler();
 		new Thread(messageHandler).start();
 		listen();
@@ -53,13 +61,12 @@ public class ChatRoomServer {
 	 * main function
 	 * @param args port number
 	 */
-	public static void main (String [] args)
-	{
+	public static void main (String[] args) {
 		try {
 			if (args.length > 0) {
-				port = Integer.parseInt(args[0]);
+				portNumber = Integer.parseInt(args[0]);
 			}
-			new ChatRoomServer(port);
+			new ChatRoomServer(portNumber);
 		} catch(SocketException e) {
 			e.printStackTrace();
 		} catch(IOException e) {
@@ -89,20 +96,25 @@ public class ChatRoomServer {
 
 	/**
 	 * Remove connection from the client list.
+	 *
+	 * @param socket  the socket needs to be removed
+	 * @param clientName  the name of the corresponding client  
 	 */
-	public void removeConnection(Socket s, String clientName) {
+	public void removeConnection(Socket socket, String clientName) {
 		try {
-			PrintWriter toClient = new PrintWriter(s.getOutputStream());
+			PrintWriter toClient = new PrintWriter(socket.getOutputStream());
 			toClient.println("You have left Chat Room.");
 			toClient.flush();
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+		
 		System.out.println(clientName + " left Chat Room.");
-		connections.remove(s);
+		connections.remove(socket);
+		
 		try {
 			msgQ.put(clientName + " left Chat Room.");
-			s.close();
+			socket.close();
 		} catch(IOException e) {
 			e.printStackTrace();
 		} catch(InterruptedException e) {
@@ -151,15 +163,17 @@ public class ChatRoomServer {
 	 */
 	class ChatServerThread implements Runnable {
 		private String clientName;
-		private Socket incoming;
+		private Socket incomingSocket;
 		private Scanner fromClient;
 
 		/**
 		 * ChatServerThread constructor
+		 *
+		 * @param incomingSocket
 		 */
-		public ChatServerThread(Socket incoming) throws IOException {
-			this.incoming = incoming;
-			fromClient = new Scanner(incoming.getInputStream());
+		public ChatServerThread(Socket incomingSocket) throws IOException {
+			this.incomingSocket = incomingSocket;
+			fromClient = new Scanner(incomingSocket.getInputStream());
 			this.clientName = fromClient.nextLine();
 		}
     /**
@@ -186,7 +200,7 @@ public class ChatRoomServer {
 			} catch(InterruptedException e) {
 				e.printStackTrace();
 			} finally {
-				ChatRoomServer.this.removeConnection(incoming, this.clientName);
+				ChatRoomServer.this.removeConnection(incomingSocket, this.clientName);
 			}
 		}
 	}

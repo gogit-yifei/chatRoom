@@ -8,7 +8,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JScrollPane;
 import javax.swing.JPanel;
-
 import java.net.Socket;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -42,6 +41,7 @@ public class ChatClient {
  * MyFrame class
  */
 class MyFrame extends JFrame {
+	
 	/**
 	 * Attributes
 	 */
@@ -51,9 +51,10 @@ class MyFrame extends JFrame {
 	private String userName = "UserName";
 	private Client client;
 	private Thread clientThread = null;
-	private JTextField ip;
-	private JTextField port;
-	private JTextField name;
+	private JTextField ipText;
+	private JTextField portText;
+	private JTextField nameText;
+	
 	/**
 	 * constructor
 	 */
@@ -63,35 +64,35 @@ class MyFrame extends JFrame {
 		setResizable(false);
 		
 		JPanel panel = new JPanel();
-		ip = new JTextField(ipAddress,15);
-		port = new JTextField(Integer.toString(portNumber),5);
-		name = new JTextField(userName);
+		ipText = new JTextField(ipAddress,15);
+		portText = new JTextField(Integer.toString(portNumber),5);
+		nameText = new JTextField(userName);
 		final JButton connection = new JButton("connect");
 
 		connection.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                try {
-                    if (client == null) {
-                        client = new Client(ip.getText(), Integer.parseInt(port.getText()));
-                        connection.setText("disconnect");
-                        if (clientThread == null) 
-                        	clientThread = new Thread(client);
-                        clientThread.start();
-                    }
-                   	else if(client != null) {
-                    	client.close();
-                    	client = null;
-                    	clientThread = null;
-                    	connection.setText("connect");
-                    }
-                } catch(IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-		panel.add(ip);
-		panel.add(port);
-		panel.add(name);
+						public void actionPerformed(ActionEvent event) {
+								try {
+										if (client == null) {
+												client = new Client(ipText.getText(), Integer.parseInt(portText.getText()));
+												connection.setText("disconnect");
+												if (clientThread == null) 
+													clientThread = new Thread(client);
+												clientThread.start();
+										}
+										else if(client != null) {
+											client.close();
+											client = null;
+											clientThread = null;
+											connection.setText("connect");
+										}
+								} catch(IOException e) {
+										e.printStackTrace();
+								}
+						}
+				});
+		panel.add(ipText);
+		panel.add(portText);
+		panel.add(nameText);
 		panel.add(connection);
 		add(panel,BorderLayout.NORTH);
 		
@@ -118,7 +119,7 @@ class MyFrame extends JFrame {
 		/**
 		 * attributes
 		 */
-		private Socket server;
+		private Socket serverSocket;
 		private Scanner fromServer;
 		private PrintWriter toServer;
 		private StringBuffer receiveMsg;
@@ -126,13 +127,15 @@ class MyFrame extends JFrame {
 		 * constructor
 		 */
 		public Client(String ipAddress, int portNumber) throws IOException {
-			server = new Socket(ipAddress, portNumber);
-			fromServer = new Scanner(server.getInputStream());
-			toServer = new PrintWriter(server.getOutputStream());
-			this.send(name.getText());
+			serverSocket = new Socket(ipAddress, portNumber);
+			fromServer = new Scanner(serverSocket.getInputStream());
+			toServer = new PrintWriter(serverSocket.getOutputStream());
+			this.send(nameText.getText());
 		}
 		/**
 		 * send message
+		 *
+		 * @param message  the message to be sent
 		 */
 		public void send(String message) {
 			toServer.println(message);
@@ -142,26 +145,26 @@ class MyFrame extends JFrame {
 		 * close printwriter and socket
 		 */
 		public void close() {
-            try {
-                toServer.close();
-                server.close();
-            } catch(IOException e) {
-                e.printStackTrace();
-            }
-        }
+						try {
+								toServer.close();
+								serverSocket.close();
+						} catch(IOException e) {
+								e.printStackTrace();
+						}
+				}
 		/**
 		 * implement run method in runnable
 		 */
 		public void run() {
-            while(true) {
-            	if(fromServer.hasNextLine()) {
-                    receiveMsg = new StringBuffer();
-                    receiveMsg.append(fromServer.nextLine());
-                    receiveMsg.append("\n");
-                    textArea.append(receiveMsg.toString());
-                }
-            }
-        }
-    }
+						while(true) {
+							if(fromServer.hasNextLine()) {
+										receiveMsg = new StringBuffer();
+										receiveMsg.append(fromServer.nextLine());
+										receiveMsg.append("\n");
+										textArea.append(receiveMsg.toString());
+								}
+						}
+				}
+		}
 
 }
